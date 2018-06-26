@@ -1,0 +1,5 @@
+{
+    "Name":"Logger",
+    "Bucket":"lambda.storyfeet.com",
+    "Role":"logger"
+}

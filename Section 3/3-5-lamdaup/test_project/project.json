@@ -1,0 +1,5 @@
+{
+    "Name":"Lambda_UP_1",
+    "Bucket":"lambda.storyfeet.com",
+    "Role":"donothing"
+}

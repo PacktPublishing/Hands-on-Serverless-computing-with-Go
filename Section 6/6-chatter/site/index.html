@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+
+<script>
+api = "https://api.storyfeet.com/";
+sessid = undefined;
+lastchat=undefined;
+
+function qfetch(lname,data){
+    return fetch(
+        api + lname,
+        {
+            headers:{
+                "content-type":"application/json"
+            },
+            method:"POST",
+            body:JSON.stringify(data)
+        }
+    ).then(function(res){
+        return res.json();
+    });
+}
+
+function AddChat(tx){
+    let chdiv = document.getElementById("chats");
+    let p = document.createElement("p");
+    p.innerHTML = tx;
+    chdiv.appendChild(p);
+}
+
+function NewUser(){
+    let uname= document.getElementById("lg-username").value;
+    AddChat("Creating User:" + uname);
+    let pass = document.getElementById("lg-pass").value;
+
+    qfetch("ch_new_user",{Username:uname,Password:pass})
+        .then(function(res){
+            if (res.Err != "") {
+                AddChat(res.Job +" : " + res.Err);
+                return
+            }
+            AddChat(res.Job + " : Success");
+        });
+}
+
+
+function Login(){
+    let uname= document.getElementById("lg-username").value;
+    AddChat("Login:" + uname);
+    let pass = document.getElementById("lg-pass").value;
+
+    qfetch("ch_login",{Username:uname,Password:pass})
+        .then(function(res){
+            if (res.Err != "") {
+                AddChat(res.Job +" : " + res.Err);
+                return
+            }
+            AddChat(res.Job + " : Success");
+            sessid = res.Sessid;
+        });
+
+}
+
+
+function ReadChat(){
+    if (sessid === undefined){
+        return
+    }
+    let dt = {
+        Sessid : sessid
+    }
+
+    if (lastchat !== undefined ){
+        dt.LastID = lastchat.DateID;
+        dt.LastTime = lastchat.Time;
+    }
+
+    qfetch("ch_read",dt)
+        .then(function(res){
+            if (res.Err != "") {
+                AddChat(res.Job +" : " + res.Err);
+                return
+            }
+            if (res.Chats !== undefined) {
+                for (let i in res.Chats) {
+                    let ch = res.Chats[i] 
+                    AddChat(ch.Username + " -- " + ch.Time);
+                    AddChat(ch.Text)
+                    lastchat = ch;
+                }
+            }
+        })
+}
+
+setInterval(ReadChat,6000)
+
+function Say(){
+    if (sessid === undefined) {
+        AddChat("Not Logged In")
+        return
+    }
+    let tx = document.getElementById("ch-text").value;
+    if (tx === "" ){
+        AddChat("Say something")
+        return
+    }
+
+    qfetch("ch_say", {Sessid:sessid, Text:tx})
+        .then(function(res){
+            if (res.Err !== undefined) {
+                AddChat(res.Job +" : " + res.Err);
+                return
+            }
+            ReadChat()
+        })
+}
+
+
+</script>
+
+
+<h1>Chatter</h1>
+
+Username:<input type="text" name="Username" id="lg-username"></br>
+Password:<input type="password" name="Password" id="lg-pass"></br>
+<button onclick="NewUser()">New User</button>
+<button onclick="Login()">Login</button>
+
+<div id="chats" style="border: 1px solid black"></div>
+<input id="ch-text" type="text"><button onclick="Say()">Say</button>
+
+
+</body>
+
+</html>
